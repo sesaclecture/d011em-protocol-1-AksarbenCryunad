@@ -25,8 +25,13 @@ def blink_led() -> None:
     - 종료시 LED는 OFF 상태
     """
     # TODO: blink_led 구현
-
-    raise NotImplementedError
+    led = LED(18)
+    for _ in range(10):
+        led.on()
+        time.sleep(1)
+        led.off()
+        time.sleep(1)
+    led.close()
 
 
 def check_to_input_button() -> None:
@@ -39,8 +44,22 @@ def check_to_input_button() -> None:
     - 버튼 입력을 10번 받았으면 종료.
     """
     # TODO: check_to_input_button 구현
+    button = Button(18, pull_up=True)
+    pressed_count = 0
+    is_pressed = False
+    
+    while pressed_count < 10:
+        if button.is_pressed and not is_pressed:
+            print("pressed")
+            pressed_count += 1
+            is_pressed = True
+        elif not button.is_pressed and is_pressed:
+            print("released")
+            is_pressed = False
+        
+        time.sleep(0.01)
 
-    raise NotImplementedError
+    button.close()
 
 
 def blink_led_through_button() -> None:
@@ -52,11 +71,31 @@ def blink_led_through_button() -> None:
     - 버튼이 10번 눌려졌으면 종료.
     - 종료시 LED는 OFF 상태
     """
-    # TODO: blink_led_through_button 구현
     led = LED(12)
-    led.on()
+    button = Button(13)
+    press_count = 0
 
-    raise NotImplementedError
+    def start_blink():
+        nonlocal press_count
+        press_count += 1
+        if press_count > 10:
+            sys.exit(0)
+        led.blink(on_time=0.5, off_time=0.5)
+
+    def stop_blink():
+        led.off()
+
+    button.when_pressed = start_blink
+    button.when_released = stop_blink
+    
+    try:
+        while press_count <= 10:
+            time.sleep(0.01)
+    except SystemExit:
+        pass
+    finally:
+        led.close()
+        button.close()
 
 
 def transmit_msg() -> None:
@@ -65,9 +104,13 @@ def transmit_msg() -> None:
     - 총 10번 전송 후 종료
     - 개행을 붙여 전송 (수신/테스트 편의)
     """
-    # TODO: blink_led_through_button 구현
-
-    raise NotImplementedError
+    # TODO: transmit_msg 구현
+    ser = Serial("/dev/ttyAMA3", baudrate=115200, timeout=1)
+    for i in range(10):
+        message = f"Hello World! {i}\n"
+        ser.write(message.encode("utf-8"))
+        time.sleep(1)
+    ser.close()
 
 
 def receive_msg() -> None:
@@ -75,9 +118,30 @@ def receive_msg() -> None:
     [문제 2] UART3에서 줄 단위로 읽어 화면에 출력.
     - 'exit' (대소문자 무시) 라인을 수신하면 함수 종료
     """
-    # TODO: blink_led_through_button 구현
+    # TODO: receive_msg 구현
+    ser = Serial("/dev/ttyAMA3", baudrate=115200, timeout=1)
 
-    raise NotImplementedError
+    while True:
+        line = ""
+        # readline 메서드가 없으므로 한 글자씩 읽어서 줄을 만듭니다.
+        while True:
+            char_byte = ser.read(1)
+            if not char_byte:
+                break
+            char = char_byte.decode("utf-8")
+            if char == '\n':
+                break
+            line += char
+        
+        if not line:
+            time.sleep(0.01)
+            continue
+
+        print(line)
+
+        if line.lower() == "exit":
+            break
+    ser.close()
 
 
 if __name__ == "__main__":
